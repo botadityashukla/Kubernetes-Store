@@ -1,0 +1,63 @@
+{{- if .Values.networkPolicy.enabled }}
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: {{ .Release.Name }}-netpol
+  labels:
+    app: {{ .Release.Name }}
+spec:
+  podSelector: {}  # Apply to all pods in namespace
+  policyTypes:
+    {{- range .Values.networkPolicy.policyTypes }}
+    - {{ . }}
+    {{- end }}
+  
+  # Ingress rules
+  ingress:
+    # Allow ingress from ingress controller to WordPress
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              name: ingress-nginx
+      ports:
+        - protocol: TCP
+          port: 80
+    
+    # Allow WordPress to connect to MySQL
+    - from:
+        - podSelector:
+            matchLabels:
+              component: wordpress
+      ports:
+        - protocol: TCP
+          port: 3306
+  
+  # Egress rules
+  egress:
+    # Allow DNS resolution
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              name: kube-system
+      ports:
+        - protocol: UDP
+          port: 53
+    
+    # Allow WordPress to MySQL
+    - to:
+        - podSelector:
+            matchLabels:
+              component: mysql
+      ports:
+        - protocol: TCP
+          port: 3306
+    
+    # Allow outbound HTTP/HTTPS (for WordPress updates, plugins, etc.)
+    - to:
+        - namespaceSelector: {}
+      ports:
+        - protocol: TCP
+          port: 80
+        - protocol: TCP
+          port: 443
+{{- end }}

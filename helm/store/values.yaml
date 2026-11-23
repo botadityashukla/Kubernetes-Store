@@ -1,0 +1,176 @@
+# Default values for store chart
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+replicaCount: 1
+
+# WordPress configuration
+wordpress:
+  image: wordpress:6.4-apache
+  pullPolicy: IfNotPresent
+  
+  service:
+    type: ClusterIP
+    port: 80
+  
+  # Resource limits and requests
+  resources:
+    requests:
+      memory: "256Mi"
+      cpu: "100m"
+    limits:
+      memory: "512Mi"
+      cpu: "500m"
+  
+  # Liveness probe - checks if container is alive
+  livenessProbe:
+    httpGet:
+      path: /
+      port: 80
+    initialDelaySeconds: 120
+    periodSeconds: 10
+    timeoutSeconds: 5
+    failureThreshold: 6
+  
+  # Readiness probe - checks if container is ready to serve traffic
+  readinessProbe:
+    httpGet:
+      path: /
+      port: 80
+    initialDelaySeconds: 30
+    periodSeconds: 10
+    timeoutSeconds: 5
+    failureThreshold: 3
+  
+  # Security context
+  securityContext:
+    runAsNonRoot: false  # WordPress needs root for Apache
+    fsGroup: 33  # www-data group
+  
+  # WooCommerce specific settings
+  woocommerce:
+    enabled: true
+    autoInstall: false  # Manual installation for now
+
+# MySQL configuration
+mysql:
+  image: mysql:8.0
+  pullPolicy: IfNotPresent
+  
+  database: wordpress
+  user: wpuser
+  password: wppass
+  rootPassword: rootpass
+  
+  service:
+    type: ClusterIP
+    port: 3306
+  
+  # Resource limits and requests
+  resources:
+    requests:
+      memory: "256Mi"
+      cpu: "100m"
+    limits:
+      memory: "512Mi"
+      cpu: "500m"
+  
+  # Liveness probe
+  livenessProbe:
+    exec:
+      command:
+        - mysqladmin
+        - ping
+        - -h
+        - localhost
+    initialDelaySeconds: 30
+    periodSeconds: 10
+    timeoutSeconds: 5
+    failureThreshold: 3
+  
+  # Readiness probe
+  readinessProbe:
+    exec:
+      command:
+        - mysqladmin
+        - ping
+        - -h
+        - localhost
+    initialDelaySeconds: 10
+    periodSeconds: 5
+    timeoutSeconds: 3
+    failureThreshold: 3
+  
+  # Security context
+  securityContext:
+    runAsNonRoot: false  # MySQL needs specific user
+    fsGroup: 999  # mysql group
+
+# Ingress configuration
+ingress:
+  enabled: true
+  className: nginx
+  host: ""  # Will be set dynamically by backend API
+  annotations: {}
+    # kubernetes.io/tls-acme: "true"
+    # cert-manager.io/cluster-issuer: "letsencrypt-prod"
+  tls:
+    enabled: false
+    secretName: ""
+
+# Persistence configuration
+persistence:
+  enabled: true
+  storageClass: ""  # Use default storage class
+  size: 2Gi
+  accessMode: ReadWriteOnce
+
+# Resource quotas (applied at namespace level)
+resourceQuota:
+  enabled: true
+  hard:
+    requests.cpu: "1"
+    requests.memory: "1Gi"
+    limits.cpu: "2"
+    limits.memory: "2Gi"
+    persistentvolumeclaims: "3"
+
+# Limit ranges (applied at namespace level)
+limitRange:
+  enabled: true
+  limits:
+    - type: Container
+      default:
+        cpu: "500m"
+        memory: "512Mi"
+      defaultRequest:
+        cpu: "100m"
+        memory: "256Mi"
+      max:
+        cpu: "1"
+        memory: "1Gi"
+      min:
+        cpu: "50m"
+        memory: "128Mi"
+
+# Network policies
+networkPolicy:
+  enabled: true
+  policyTypes:
+    - Ingress
+    - Egress
+
+# Service account
+serviceAccount:
+  create: true
+  annotations: {}
+  name: ""
+
+# Node selector
+nodeSelector: {}
+
+# Tolerations
+tolerations: []
+
+# Affinity
+affinity: {}

@@ -1,0 +1,28 @@
+{
+  "name": "store-orchestration-backend",
+  "version": "1.0.0",
+  "description": "Backend API for Kubernetes-based multi-tenant WooCommerce store provisioning",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "kubernetes",
+    "helm",
+    "woocommerce",
+    "multi-tenant",
+    "store-provisioning"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "body-parser": "^2.2.2",
+    "child_process": "^1.0.2",
+    "cors": "^2.8.6",
+    "express": "^5.2.1",
+    "fs-extra": "^11.3.3",
+    "uuid": "^13.0.0"
+  }
+}
